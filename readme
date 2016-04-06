@@ -1,0 +1,75 @@
+README
+
+Explanation
+
+This code uses a binary tree data structure to manage the memory partition.  Each node in stored in the beginning of the memory chunk to hich it belonds.  All parent node information is appended to the end of the child node.  The system takes the nodal information into consideration when allocating a memory block to a process.  When the memory block is returned, we need another function to consider its offset before the process starts to use it so it does not overwrite nodal information.
+
+When memory is released from a process, it automatically joins back up with its buddy if it is also free and not partitioned.  This ensures that all available blocks will be there when one is freed. 
+
+Sufficient documentation is outlined in the program in the form of comments.  
+
+Black Box Tests
+      -Should be inserted in source where /*  INSERT TEST HERE  */ is written/
+
+1.  Test that the memory manager does not allocate blocks that are too small, is able to allocate blocks when available, and release blocks when they are occupied.
+
+./binbuddies 512
+
+void * p1 = get_memory(500) //Will allocate the entire block
+void * p2 = get_memory(216)  //Will return NULL
+
+release_memory(p1);
+p2 = get_memory(216); //Will return a valid memory block
+
+
+2.  Test that NULL memory can't be released
+
+./binbuddies 512
+
+void * p1 = get_memory(625);  //returns NULL pointer
+release_memory(p1);  //Does nothing.
+
+3.  Tests that the manager is able to work with a series of small partitions.
+
+./binbuddies 512
+
+void * p1 = get_memory(64)
+void * p2 = get_memory(50)
+void * p3 = get_memory(64);
+void * p4 = get_memory(24);
+void * p5 = get_memory(20);
+
+release_memory(p1);
+release_memory(p2);
+release_memory(p3);
+release_memory(p4);
+release_memory(p5);
+
+
+White Box Tests
+      -Input into test prompt in source code:
+
+      void * p1 = get_memory(64);
+      void * p2 = get_memory(216);
+      void * p3 = get_memory(50);
+
+      release_memory(p1);
+      release_memory(p2);
+      release_memory(p3);
+
+1.  Make sure that blocks are being automatically joined if available upon release_memory and broken up automatically if available upon get_memory
+
+gdb --args binbuddies 512
+break get_memory()
+break release_memory()
+run
+
+Notice at get_memory, for each call from the main, we recursively break down our main block until an appropriately sized frame is found.  Notice the same behaviour for each call.
+
+Similarly, notice when release_memory is called the function recursively joins together free blocks where they exist.  For p1, the recursive call will happen until the small 64 byte block is joined with blocks until it fits together with the sizes of p2 and p3.
+
+2.  Without pasting the test code, make sure that the start_memory and end_memory functions initialize the memory properly by p[lacing a root node at the beginning and clean up the mempry appropriately by erasing all the nodal information and freeing the block.
+
+gdb --args binbuddies 512
+break start_memory()
+break end_memory()
